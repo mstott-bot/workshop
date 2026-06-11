@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Workshop">
+<title>Car Agent Workshop Efficiency</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Archivo',sans-serif;background:#EDEEEA;color:#181B1F;min-height:100vh;padding-bottom:48px}
+  input,select,button{font-family:'Archivo',sans-serif}
+  input:focus,select:focus,button:focus-visible{outline:3px solid #FFD307;outline-offset:1px}
+
+  header{background:#181B1F;color:#fff;padding:20px 20px 16px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+  .brand{display:flex;gap:12px;align-items:center}
+  .brandmark{background:#FFD307;color:#181B1F;font-weight:900;font-stretch:75%;font-size:20px;padding:8px 10px;border-radius:4px;letter-spacing:.05em}
+  .brandname{font-weight:900;font-stretch:70%;font-size:24px;letter-spacing:.06em;line-height:1}
+  .brandsub{font-size:12px;opacity:.65;margin-top:4px}
+  .month-pick input{padding:8px 10px;border:none;border-radius:6px;font-size:14px;font-weight:700}
+
+  nav{display:flex;background:#181B1F;padding:0 12px;gap:4px;overflow-x:auto}
+  nav button{flex:1;min-width:86px;background:transparent;color:rgba(255,255,255,.55);border:none;border-bottom:3px solid transparent;padding:12px 4px;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+  nav button.active{color:#fff;border-bottom:3px solid #FFD307}
+
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#181B1F;color:#FFD307;padding:10px 18px;border-radius:6px;font-weight:700;font-size:14px;z-index:10;box-shadow:0 4px 16px rgba(0,0,0,.25);display:none}
+
+  .card{background:#fff;margin:16px auto;max-width:720px;border-radius:10px;padding:20px 18px;box-shadow:0 1px 4px rgba(20,22,26,.08)}
+  .card-title{font-weight:900;font-stretch:72%;font-size:19px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .field{display:block;margin-bottom:14px;min-width:0}
+  .field label,.field-label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#5B6068;margin-bottom:5px}
+  input[type=text],input[type=date],input[type=number],input[type=month],select{width:100%;padding:11px 12px;border:1.5px solid #C9CCC6;border-radius:6px;font-size:16px;background:#FAFAF8}
+  .type-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px}
+  .type-btn{padding:12px 8px;border:1.5px solid #C9CCC6;border-radius:6px;background:#FAFAF8;font-size:14px;font-weight:700;cursor:pointer;text-align:center}
+  .type-btn.active{background:#181B1F;color:#FFD307;border-color:#181B1F}
+  .tech-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:6px}
+  .log-btn{width:100%;margin-top:6px;padding:15px;background:#FFD307;color:#181B1F;border:2px solid #181B1F;border-radius:8px;font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
+  .log-btn:disabled{opacity:.5;cursor:not-allowed}
+  .mini-btn{padding:10px 16px;background:#FFD307;color:#181B1F;border:2px solid #181B1F;border-radius:6px;font-size:14px;font-weight:900;cursor:pointer;white-space:nowrap}
+  .mini-btn:disabled{opacity:.5}
+
+  .empty{color:#777;padding:18px 4px;font-size:15px}
+  .loading{text-align:center;padding:24px;color:#777;font-size:14px}
+  .refresh-btn{border:1.5px solid #C9CCC6;background:#FAFAF8;border-radius:6px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px}
+
+  .row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #EDEEEA}
+  .badge{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:4px 7px;border-radius:4px;white-space:nowrap}
+  .badge.retail{background:#FFD307;color:#181B1F}
+  .badge.internal{background:#181B1F;color:#fff}
+  .badge.warranty{background:#C9CCC6;color:#181B1F}
+  .row-main{flex:1;min-width:0}
+  .row-top{display:flex;justify-content:space-between;gap:8px;font-size:14.5px}
+  .row-tech{font-weight:700}
+  .row-eff{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13.5px}
+  .row-sub{font-size:12.5px;color:#6B7077;margin-top:2px}
+  .good{color:#1E7D45}.bad{color:#C0392B}.pending{color:#B07D00;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+
+  .job-card{border:1.5px solid #EDEEEA;border-radius:8px;padding:12px;margin-bottom:12px}
+  .job-card.done{opacity:.65}
+  .job-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+  .job-ref{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px}
+  .job-sub{font-size:13px;color:#6B7077;margin-bottom:10px}
+  .complete-line{display:flex;gap:8px;align-items:center}
+  .complete-line input{flex:1;max-width:140px}
+
+  .big-stat{text-align:center;padding:14px 0 18px}
+  .big-num{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:46px;line-height:1}
+  .big-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#5B6068;font-weight:700;margin-top:6px}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+  .stat-box{background:#FAFAF8;border:1.5px solid #EDEEEA;border-radius:8px;padding:12px 10px;text-align:center}
+  .stat-num{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:20px}
+  .stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#5B6068;font-weight:700;margin-top:3px}
+
+  .tech-block{margin-bottom:18px;border:1.5px solid #EDEEEA;border-radius:8px;padding:12px}
+  .tech-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .tech-name{font-weight:900;font-size:16px}
+  .tech-month-eff{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:18px}
+  .tech-sub{font-size:12.5px;color:#6B7077;margin-bottom:6px}
+  .day-line{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-top:1px dashed #EDEEEA;font-family:'IBM Plex Mono',monospace}
+
+  .bar-track{height:8px;background:#EDEEEA;border-radius:4px;overflow:hidden;margin:5px 0 10px}
+  .bar-fill{height:100%;background:#181B1F;border-radius:4px}
+  .bar-fill.over{background:#1E7D45}
+  .target-head{display:flex;justify-content:space-between;font-size:14px;margin-top:10px}
+  .target-name{font-weight:700}
+  .target-stats{font-family:'IBM Plex Mono',monospace;font-size:13px}
+
+  .staff-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #EDEEEA}
+  .staff-name{font-weight:700;font-size:15px}
+  .remove-btn{border:1.5px solid #C9CCC6;background:#FAFAF8;color:#C0392B;border-radius:5px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+  .add-line{display:flex;gap:8px;margin-top:12px}
+
+  footer{text-align:center;font-size:12px;color:#7A7F76;margin-top:18px;padding:0 20px}
+  @media(max-width:520px){.form-grid-3{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.stat-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brandmark">CA</div>
+    <div>
+      <div class="brandname">WORKSHOP</div>
+      <div class="brandsub">Car Agent · service efficiency</div>
+    </div>
+  </div>
+  <div class="month-pick">
+    <input type="month" id="month-sel" onchange="renderAll()">
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('myjobs',this)">My jobs</button>
+  <button onclick="showTab('assign',this)">Assign</button>
+  <button onclick="showTab('jobs',this)">All jobs</button>
+  <button onclick="showTab('techs',this)">Technicians</button>
+  <button onclick="showTab('workshop',this)">Workshop</button>
+  <button onclick="showTab('settings',this)">Settings</button>
+</nav>
+
+<div id="toast"></div>
+
+<!-- MY JOBS -->
+<div id="tab-myjobs" class="card">
+  <div class="card-title">My jobs</div>
+  <div class="form-grid">
+    <div class="field"><label>I am</label><select id="my-tech" onchange="rememberTech();renderMyJobs()"></select></div>
+    <div class="field"><label>Day</label><input type="date" id="my-date" onchange="renderMyJobs()"></div>
+  </div>
+  <button class="refresh-btn" onclick="loadData(true)">↻ Refresh</button>
+  <div id="my-jobs-list"><div class="loading">Loading…</div></div>
+</div>
+
+<!-- ASSIGN -->
+<div id="tab-assign" class="card">
+  <div class="card-title">Assign a job</div>
+  <div class="form-grid">
+    <div class="field"><label>Date</label><input type="date" id="a-date"></div>
+    <div class="field"><label>Job / vehicle ref</label><input type="text" id="a-ref" placeholder="Job no. or reg"></div>
+  </div>
+  <div class="field">
+    <div class="field-label">Technician</div>
+    <div class="tech-grid" id="a-tech-grid"></div>
+  </div>
+  <div class="field">
+    <div class="field-label">Job type</div>
+    <div class="type-grid">
+      <button class="type-btn" data-type="Retail" onclick="pickType(this)">Retail</button>
+      <button class="type-btn" data-type="Internal" onclick="pickType(this)">Internal</button>
+      <button class="type-btn" data-type="Warranty" onclick="pickType(this)">Warranty</button>
+    </div>
+  </div>
+  <div class="field" style="max-width:240px"><label>Hours allocated (sold)</label><input type="number" step="0.1" inputmode="decimal" id="a-alloc" placeholder="e.g. 1.5"></div>
+  <button class="log-btn" id="assign-btn" onclick="assignJob()">Assign job</button>
+</div>
+
+<!-- ALL JOBS -->
+<div id="tab-jobs" class="card" style="display:none">
+  <div class="card-title">Jobs this month</div>
+  <button class="refresh-btn" onclick="loadData(true)">↻ Refresh</button>
+  <div id="job-list"><div class="loading">Loading…</div></div>
+</div>
+
+<!-- TECHNICIANS -->
+<div id="tab-techs" class="card" style="display:none">
+  <div class="card-title">Technician efficiency</div>
+  <p style="font-size:12.5px;color:#6B7077;margin-bottom:12px">Efficiency counts completed jobs only (sold hours ÷ actual hours).</p>
+  <div id="tech-report"><div class="loading">Loading…</div></div>
+</div>
+
+<!-- WORKSHOP -->
+<div id="tab-workshop" class="card" style="display:none">
+  <div class="card-title">Workshop — month view</div>
+  <div id="workshop-report"><div class="loading">Loading…</div></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="tab-settings" class="card" style="display:none">
+  <div class="card-title">Monthly settings &amp; targets</div>
+  <p style="font-size:13.5px;color:#4A4F56;margin-bottom:14px">These apply to the month selected at the top and are shared with everyone.</p>
+  <div class="form-grid">
+    <div class="field"><label>Available hours (whole team)</label><input type="number" step="0.5" id="s-available" placeholder="e.g. 800"></div>
+    <div class="field"><label>Internal cars completed target</label><input type="number" id="s-cars" placeholder="e.g. 25"></div>
+  </div>
+  <div class="form-grid-3">
+    <div class="field"><label>Retail hours target</label><input type="number" step="0.5" id="s-retail" placeholder="e.g. 400"></div>
+    <div class="field"><label>Internal hours target</label><input type="number" step="0.5" id="s-internal" placeholder="e.g. 250"></div>
+    <div class="field"><label>Warranty hours target</label><input type="number" step="0.5" id="s-warranty" placeholder="e.g. 150"></div>
+  </div>
+  <button class="log-btn" onclick="saveSettings()">Save settings for this month</button>
+
+  <div class="card-title" style="margin-top:26px">Staff</div>
+  <p style="font-size:13px;color:#4A4F56;margin-bottom:8px">Removing someone hides them from the lists — their past jobs stay in the records and reports.</p>
+  <div id="staff-list"></div>
+  <div class="add-line">
+    <input type="text" id="new-tech" placeholder="New name">
+    <button class="mini-btn" onclick="addTech()">Add</button>
+  </div>
+</div>
+
+<footer>Shared workshop board — backed by Google Sheets.</footer>
+
+<script>
+// ▼▼▼ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BETWEEN THE QUOTES ▼▼▼
+const API_URL = "https://script.google.com/macros/s/AKfycbxH8AImZjbS8UIIpxeApnjh8wTFnflGlniVFzQ9JEUQA1o-ovfE7g3UoCamznYbSGIgEA/exec";
+// ▲▲▲ Looks like: https://script.google.com/macros/s/AKfycb.../exec ▲▲▲
+
+let jobs = [];
+let settings = {};
+let techs = ["Jake","James","Gordon","Ross","Other"]; // fallback until sheet loads
+let selectedTech = "", selectedType = "";
+
+const $ = id => document.getElementById(id);
+const pct = n => (n*100).toFixed(0) + "%";
+const h1 = n => (Math.round(n*10)/10).toLocaleString("en-GB");
+const esc = s => String(s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toast(m){ const el=$("toast"); el.textContent=m; el.style.display="block"; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display="none",2500); }
+
+function monthKey(){ return $("month-sel").value; }
+function monthJobs(){ const k = monthKey(); return jobs.filter(j => (j.date||"").slice(0,7) === k); }
+function doneJobs(list){ return list.filter(j => +j.taken > 0); }
+function monthSettings(){ return settings[monthKey()] || {}; }
+
+function showTab(name, btn){
+  ["myjobs","assign","jobs","techs","workshop","settings"].forEach(t => $("tab-"+t).style.display = t===name?"block":"none");
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderAll();
+}
+
+function pickType(btn){
+  selectedType = btn.dataset.type;
+  document.querySelectorAll(".type-btn[data-type]").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+}
+function rememberTech(){ localStorage.setItem("ca-mytech", $("my-tech").value); }
+
+const now = new Date();
+$("month-sel").value = now.toISOString().slice(0,7);
+$("a-date").value = now.toISOString().slice(0,10);
+$("my-date").value = now.toISOString().slice(0,10);
+
+function buildTechUI(){
+  // assign grid
+  const atg = $("a-tech-grid");
+  atg.innerHTML = "";
+  techs.forEach(t => {
+    const b = document.createElement("button");
+    b.className = "type-btn" + (selectedTech===t?" active":""); b.textContent = t;
+    b.onclick = () => { selectedTech = t; atg.querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); };
+    atg.appendChild(b);
+  });
+  // my-tech dropdown
+  const sel = $("my-tech");
+  const prev = sel.value || localStorage.getItem("ca-mytech");
+  sel.innerHTML = "";
+  techs.forEach(t => { const o = document.createElement("option"); o.value = o.textContent = t; sel.appendChild(o); });
+  if (prev && techs.includes(prev)) sel.value = prev;
+  // staff list
+  const sl = $("staff-list");
+  sl.innerHTML = techs.map(t => `<div class="staff-row"><span class="staff-name">${esc(t)}</span>
+    <button class="remove-btn" onclick="removeTech('${esc(t)}')">Remove</button></div>`).join("");
+}
+
+async function loadData(showToast){
+  try{
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    jobs = data.jobs || [];
+    settings = data.settings || {};
+    if (Array.isArray(data.techs) && data.techs.length) techs = data.techs;
+    buildTechUI();
+    renderAll();
+    if(showToast) toast("Refreshed ✓");
+  }catch(e){
+    $("my-jobs-list").innerHTML = '<div class="empty">Couldn\'t load — check connection / API_URL.</div>';
+  }
+}
+
+async function postData(payload){
+  await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+}
+
+async function addTech(){
+  const name = $("new-tech").value.trim();
+  if(!name){ toast("Enter a name"); return; }
+  if(techs.includes(name)){ toast("Already in the list"); return; }
+  try{
+    await postData({kind:"techs", techs:[...techs, name]});
+    techs.push(name);
+    $("new-tech").value = "";
+    buildTechUI();
+    toast(name + " added ✓");
+  }catch(e){ toast("Couldn't save — check connection"); }
+}
+
+async function removeTech(name){
+  if(!confirm("Remove " + name + " from the staff list? Their past jobs are kept.")) return;
+  try{
+    const next = techs.filter(t => t !== name);
+    await postData({kind:"techs", techs:next});
+    techs = next;
+    if(selectedTech === name) selectedTech = "";
+    buildTechUI();
+    renderAll();
+    toast(name + " removed");
+  }catch(e){ toast("Couldn't save — check connection"); }
+}
+
+async function assignJob(){
+  if(!selectedTech || !selectedType){ toast("Pick a technician and job type"); return; }
+  const alloc = parseFloat($("a-alloc").value);
+  if(!alloc){ toast("Enter allocated hours"); return; }
+  const btn = $("assign-btn"); btn.disabled = true; btn.textContent = "Saving…";
+  const job = { kind:"job", id: String(Date.now()), date:$("a-date").value, tech:selectedTech, type:selectedType,
+    ref:$("a-ref").value.trim().toUpperCase(), allocated:alloc, taken:"" };
+  try{
+    await postData(job);
+    $("a-ref").value=""; $("a-alloc").value="";
+    toast("Job assigned ✓");
+    loadData();
+  }catch(e){ toast("Couldn't save — check connection"); }
+  btn.disabled = false; btn.textContent = "Assign job";
+}
+
+async function completeJob(id, btn){
+  const inp = document.getElementById("taken-"+id);
+  const taken = parseFloat(inp.value);
+  if(!taken){ toast("Enter the time taken"); return; }
+  btn.disabled = true; btn.textContent = "Saving…";
+  try{
+    await postData({kind:"complete", id:String(id), taken});
+    toast("Job completed ✓");
+    loadData();
+  }catch(e){ toast("Couldn't save — check connection"); btn.disabled=false; btn.textContent="Done"; }
+}
+
+async function saveSettings(){
+  const k = monthKey();
+  const s = { kind:"settings", month:k,
+    available:parseFloat($("s-available").value)||0,
+    carsTarget:parseFloat($("s-cars").value)||0,
+    retailTarget:parseFloat($("s-retail").value)||0,
+    internalTarget:parseFloat($("s-internal").value)||0,
+    warrantyTarget:parseFloat($("s-warranty").value)||0 };
+  try{
+    await postData(s);
+    settings[k] = s;
+    toast("Settings saved ✓");
+    renderAll();
+  }catch(e){ toast("Couldn't save — check connection"); }
+}
+
+function effClass(e){ return e >= 1 ? "good" : "bad"; }
+
+function renderAll(){ renderMyJobs(); renderJobs(); renderTechs(); renderWorkshop(); fillSettings(); }
+
+function fillSettings(){
+  const s = monthSettings();
+  $("s-available").value = s.available || "";
+  $("s-cars").value = s.carsTarget || "";
+  $("s-retail").value = s.retailTarget || "";
+  $("s-internal").value = s.internalTarget || "";
+  $("s-warranty").value = s.warrantyTarget || "";
+}
+
+function renderMyJobs(){
+  const tech = $("my-tech").value, day = $("my-date").value;
+  const list = jobs.filter(j => j.tech === tech && j.date === day);
+  const el = $("my-jobs-list");
+  if(!list.length){ el.innerHTML = '<div class="empty">No jobs assigned for this day.</div>'; return; }
+  const open = list.filter(j => !(+j.taken > 0));
+  const done = list.filter(j => +j.taken > 0);
+  const totalAlloc = list.reduce((a,j)=>a+(+j.allocated||0),0);
+  el.innerHTML =
+    `<p style="font-size:13.5px;color:#4A4F56;margin-bottom:12px"><strong>${list.length} jobs</strong> · ${h1(totalAlloc)} hours allocated today</p>` +
+    open.map(j => `
+      <div class="job-card">
+        <div class="job-head">
+          <span class="job-ref">${esc(j.ref)||"—"}</span>
+          <span class="badge ${(j.type||"").toLowerCase()}">${esc(j.type)}</span>
+        </div>
+        <div class="job-sub">Allocated: <strong>${h1(j.allocated)}h</strong></div>
+        <div class="complete-line">
+          <input type="number" step="0.1" inputmode="decimal" id="taken-${j.id}" placeholder="Time taken (h)">
+          <button class="mini-btn" onclick="completeJob('${j.id}', this)">Done</button>
+        </div>
+      </div>`).join("") +
+    done.map(j => {
+      const e = j.allocated/(+j.taken);
+      return `<div class="job-card done">
+        <div class="job-head">
+          <span class="job-ref">${esc(j.ref)||"—"}</span>
+          <span class="row-eff ${effClass(e)}">${pct(e)}</span>
+        </div>
+        <div class="job-sub">Allocated ${h1(j.allocated)}h · took ${h1(j.taken)}h ✓</div>
+      </div>`;
+    }).join("");
+}
+
+function renderJobs(){
+  const list = monthJobs().slice().sort((a,b)=> (b.date||"").localeCompare(a.date||""));
+  const el = $("job-list");
+  if(!list.length){ el.innerHTML = '<div class="empty">No jobs for this month yet.</div>'; return; }
+  el.innerHTML = list.slice(0,200).map(j => {
+    const isDone = +j.taken > 0;
+    const e = isDone ? j.allocated/(+j.taken) : 0;
+    return `<div class="row">
+      <span class="badge ${(j.type||"").toLowerCase()}">${esc(j.type)}</span>
+      <div class="row-main">
+        <div class="row-top"><span class="row-tech">${esc(j.tech)}</span>
+        ${isDone ? `<span class="row-eff ${effClass(e)}">${pct(e)}</span>` : `<span class="pending">In progress</span>`}</div>
+        <div class="row-sub">${esc(j.date)} · ${esc(j.ref)||"—"} · sold ${h1(j.allocated)}h${isDone?` / took ${h1(j.taken)}h`:""}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderTechs(){
+  const list = doneJobs(monthJobs());
+  const el = $("tech-report");
+  if(!list.length){ el.innerHTML = '<div class="empty">No completed jobs this month yet.</div>'; return; }
+  // include anyone with jobs this month even if removed from staff list
+  const names = [...new Set([...techs, ...list.map(j=>j.tech)])];
+  el.innerHTML = names.map(t => {
+    const tj = list.filter(j => j.tech === t);
+    if(!tj.length) return `<div class="tech-block"><div class="tech-head"><span class="tech-name">${esc(t)}</span><span class="tech-sub">no completed jobs</span></div></div>`;
+    const alloc = tj.reduce((a,j)=>a+(+j.allocated||0),0);
+    const taken = tj.reduce((a,j)=>a+(+j.taken||0),0);
+    const eff = taken>0 ? alloc/taken : 0;
+    const days = {};
+    tj.forEach(j => {
+      if(!days[j.date]) days[j.date] = {a:0,t:0};
+      days[j.date].a += +j.allocated||0; days[j.date].t += +j.taken||0;
+    });
+    const dayLines = Object.keys(days).sort().reverse().map(d => {
+      const de = days[d].t>0 ? days[d].a/days[d].t : 0;
+      return `<div class="day-line"><span>${d}</span><span>sold ${h1(days[d].a)} / ${h1(days[d].t)}h</span><span class="${effClass(de)}">${pct(de)}</span></div>`;
+    }).join("");
+    return `<div class="tech-block">
+      <div class="tech-head"><span class="tech-name">${esc(t)}</span>
+      <span class="tech-month-eff ${effClass(eff)}">${pct(eff)}</span></div>
+      <div class="tech-sub">${tj.length} completed · sold ${h1(alloc)}h · worked ${h1(taken)}h</div>
+      ${dayLines}
+    </div>`;
+  }).join("");
+}
+
+function renderWorkshop(){
+  const all = monthJobs();
+  const list = doneJobs(all);
+  const s = monthSettings();
+  const el = $("workshop-report");
+  const alloc = list.reduce((a,j)=>a+(+j.allocated||0),0);
+  const taken = list.reduce((a,j)=>a+(+j.taken||0),0);
+  const eff = taken>0 ? alloc/taken : 0;
+  const util = s.available>0 ? taken/s.available : null;
+
+  const byType = {};
+  ["Retail","Internal","Warranty"].forEach(t => {
+    byType[t] = list.filter(j=>j.type===t).reduce((a,j)=>a+(+j.allocated||0),0);
+  });
+  const internalCars = new Set(list.filter(j=>j.type==="Internal" && j.ref).map(j=>j.ref)).size;
+  const openCount = all.length - list.length;
+
+  const targetBar = (name, val, target, unit) => {
+    unit = unit || "h";
+    if(!target) return `<div class="target-head"><span class="target-name">${name}</span><span class="target-stats">${h1(val)}${unit} · no target set</span></div>`;
+    const p = Math.min(val/target,1)*100;
+    return `<div class="target-head"><span class="target-name">${name}</span>
+      <span class="target-stats">${h1(val)} / ${h1(target)}${unit} (${pct(val/target)})</span></div>
+      <div class="bar-track"><div class="bar-fill ${val>=target?"over":""}" style="width:${p}%"></div></div>`;
+  };
+
+  el.innerHTML = `
+    <div class="big-stat">
+      <div class="big-num ${effClass(eff)}">${pct(eff)}</div>
+      <div class="big-label">workshop efficiency (sold ÷ worked)</div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-num">${h1(alloc)}</div><div class="stat-label">hours sold</div></div>
+      <div class="stat-box"><div class="stat-num">${h1(taken)}</div><div class="stat-label">hours worked</div></div>
+      <div class="stat-box"><div class="stat-num">${util!==null?pct(util):"–"}</div><div class="stat-label">utilisation${s.available?` (of ${h1(s.available)}h)`:""}</div></div>
+    </div>
+    ${openCount?`<p style="font-size:13px;color:#B07D00;font-weight:700;margin-bottom:8px">${openCount} job${openCount!==1?"s":""} still in progress (not counted)</p>`:""}
+    ${targetBar("Retail hours", byType.Retail, s.retailTarget)}
+    ${targetBar("Internal hours", byType.Internal, s.internalTarget)}
+    ${targetBar("Warranty hours", byType.Warranty, s.warrantyTarget)}
+    ${targetBar("Internal cars completed", internalCars, s.carsTarget, " cars")}
+  `;
+}
+
+buildTechUI();
+loadData();
+</script>
+</body>
+</html>
